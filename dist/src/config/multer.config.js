@@ -24,11 +24,14 @@ exports.multerConfig = {
         },
     }),
     limits: {
-        fileSize: 100 * 1024 * 1024
+        fileSize: 250 * 1024 * 1024
     },
     fileFilter(req, file, callback) {
-        const mimetypes = ["video/mpeg", "video/mov", "video/mp4", "video/wmv",
-            "audio/m4a", "audio/aac", "audio/wav", "audio/mp3", "audio/ogg", "audio/wma"];
+        const mimetypes = [
+            "video/mp4", "video/mpeg", "video/quicktime", "video/mov", "video/wmv", "video/avi",
+            "video/x-msvideo", "video/webm", "video/ogg", "video/x-flv", "video/3gpp", "video/3gpp2",
+            "video/x-matroska"
+        ];
         if (!mimetypes.includes(file.mimetype)) {
             return callback(new common_1.BadRequestException(`Acceptable mimetypes incluede ${mimetypes}`), false);
         }

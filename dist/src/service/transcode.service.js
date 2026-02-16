@@ -19,7 +19,7 @@ let TranscodeService = class TranscodeService {
             ffmpeg_config_1.default.ffprobe(filePath, (err, metadata) => {
                 if (err)
                     return reject(new common_1.BadRequestException("Unable to read media metadata"));
-                const hasValidStream = metadata.streams?.find(stream => stream.codec_type == "audio");
+                const hasValidStream = metadata.streams?.find(stream => stream.codec_type == "video");
                 if (!hasValidStream)
                     return reject(new common_1.BadRequestException("Unable to validate file properities"));
                 const maxDuration = 300;
@@ -30,7 +30,7 @@ let TranscodeService = class TranscodeService {
             });
         });
     }
-    async exec(filePath) {
+    async extract(filePath) {
         await this.validate(filePath);
         const outputPath = path_1.default.join(path_1.default.dirname(filePath), "audio.wav");
         return new Promise((resolve, reject) => {
@@ -43,6 +43,27 @@ let TranscodeService = class TranscodeService {
                 .on('end', () => resolve(outputPath))
                 .on("error", err => reject(new common_1.BadRequestException("Something went wrong while processing file")))
                 .save(outputPath);
+        });
+    }
+    async burn(filePath, srtPath) {
+        const dir = path_1.default.join(path_1.default.dirname(filePath), "output.mp4");
+        const normalizedSrtPath = srtPath
+            .replace(/\\/g, "/")
+            .replace(/:/g, "\\:");
+        return new Promise((resolve, reject) => {
+            (0, ffmpeg_config_1.default)(filePath)
+                .outputOptions([
+                `-vf subtitles='${normalizedSrtPath}:force_style=FontName=Arial,FontSize=12,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,Shadow=0,Alignment=2,MarginV=30'`,
+                "-c:a copy"
+            ])
+                .videoCodec("libx264")
+                .format("mp4")
+                .on("end", () => resolve(dir))
+                .on("error", err => {
+                console.error(err);
+                reject(new common_1.BadRequestException("Something went wrong while processing file"));
+            })
+                .save(dir);
         });
     }
 };

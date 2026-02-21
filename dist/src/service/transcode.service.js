@@ -13,26 +13,22 @@ exports.TranscodeService = void 0;
 const common_1 = require("@nestjs/common");
 const path_1 = __importDefault(require("path"));
 const node_fs_1 = __importDefault(require("node:fs"));
-const file_cleaner_1 = require("../utils/file-cleaner");
 const ffmpeg_config_1 = __importDefault(require("../utils/ffmpeg-config"));
 let TranscodeService = class TranscodeService {
     validate(filePath) {
         return new Promise((resolve, reject) => {
             ffmpeg_config_1.default.ffprobe(filePath, (err, metadata) => {
                 if (err) {
-                    (0, file_cleaner_1.fileCleaner)(filePath);
                     return reject(new common_1.BadRequestException("Unable to read media metadata"));
                 }
                 const hasValidStream = metadata.streams?.find(stream => stream.codec_type == "video");
                 if (!hasValidStream) {
-                    (0, file_cleaner_1.fileCleaner)(filePath);
                     return reject(new common_1.BadRequestException("Unable to validate file properities"));
                 }
-                const maxDuration = 600;
+                const maxDuration = 180;
                 const duration = metadata.format?.duration;
                 if (!duration || duration > maxDuration) {
-                    (0, file_cleaner_1.fileCleaner)(filePath);
-                    return reject(new common_1.BadRequestException("File exceeds max time limit of 10 minutes"));
+                    return reject(new common_1.BadRequestException("File exceeds max time limit of 3 minutes"));
                 }
                 return resolve(true);
             });
@@ -49,8 +45,6 @@ let TranscodeService = class TranscodeService {
                 .format("wav")
                 .on('end', () => resolve(outputPath))
                 .on("error", err => {
-                (0, file_cleaner_1.fileCleaner)(filePath);
-                console.log(err);
                 reject(new Error("Something went wrong while processing file"));
             })
                 .save(outputPath);
@@ -74,8 +68,6 @@ let TranscodeService = class TranscodeService {
                 .format("mp4")
                 .on("end", () => resolve(outputPath))
                 .on("error", err => {
-                (0, file_cleaner_1.fileCleaner)(filePath);
-                console.error(err);
                 reject(new Error("Something went wrong while processing file"));
             })
                 .save(outputPath);

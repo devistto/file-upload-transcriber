@@ -12,7 +12,7 @@ const nanoid_1 = require("nanoid");
 exports.multerOptions = {
     storage: (0, multer_1.diskStorage)({
         destination(req, file, callback) {
-            const base = path_1.default.join(process.cwd(), "uploads");
+            const base = path_1.default.join(process.cwd(), "temp");
             const fileFolder = (0, nanoid_1.customAlphabet)("abcdefghijklmnopqrstuvwxyz123456789", 10);
             const filePath = path_1.default.join(base, fileFolder());
             if (!node_fs_1.default.existsSync(filePath))
@@ -24,7 +24,7 @@ exports.multerOptions = {
         },
     }),
     limits: {
-        fileSize: 500 * 1024 * 1024
+        fileSize: 250 * 1024 * 1024
     },
     fileFilter(req, file, callback) {
         const mimetypes = [

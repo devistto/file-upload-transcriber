@@ -3,16 +3,19 @@ import { multerOptions } from "src/utils/multer-options";
 import { FileInterceptor } from "@nestjs/platform-express"
 import { VideoService } from "src/service/video.service";
 import { WhisperLanguage, WhisperOptionsDto } from "src/dto/whisper-options.dto";
-import { fileCleaner } from "src/utils/file-cleaner";
 import { createReadStream } from "fs";
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { CleanUpInterceptor } from "src/interceptor/clean-up.interceptor";
 
 @Controller('videos')
 export class VideoController {
     constructor(private videoService: VideoService) { }
 
     @Post()
-    @UseInterceptors(FileInterceptor('video', multerOptions))
+    @UseInterceptors(
+        FileInterceptor('video', multerOptions),
+        CleanUpInterceptor
+    )
     @ApiConsumes('multipart/form-data')
     @ApiOperation({
         summary: 'Create a subtitled video',
@@ -25,7 +28,7 @@ export class VideoController {
                 video: {
                     type: 'string',
                     format: 'binary',
-                    description: "A 500MB video file, maximum 5 minutes long - Supported formats: MP4, MPEG, QuickTime, WMV, AVI, WebM, Ogg, FLV, 3GPP, 3GPP2",
+                    description: "A ~300MB video file, maximum 3 minutes long - Supported formats: MP4, MPEG, QuickTime, WMV, AVI, WebM, Ogg, FLV, 3GPP, 3GPP2",
                 },
                 task: {
                     type: "string",
@@ -75,15 +78,9 @@ export class VideoController {
         @UploadedFile() file: Express.Multer.File,
         @Body() dto: WhisperOptionsDto,
     ): Promise<StreamableFile> {
-        if (!file) throw new BadRequestException('File is missing');
-
         const videoPath = await this.videoService.create(file.path, dto);
 
         const stream = createReadStream(videoPath);
-
-        stream.on('close', () => {
-            fileCleaner(videoPath);
-        });
 
         return new StreamableFile(stream, {
             type: 'video/mp4',

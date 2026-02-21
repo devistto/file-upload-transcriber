@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import path from "path";
 import fs from "node:fs"
-import { fileCleaner } from "src/utils/file-cleaner";
 import ffmpeg from "src/utils/ffmpeg-config";
 
 @Injectable()
@@ -11,23 +10,20 @@ export class TranscodeService {
         return new Promise((resolve, reject) => {
             ffmpeg.ffprobe(filePath, (err, metadata) => {
                 if (err) {
-                    fileCleaner(filePath);
                     return reject(new BadRequestException("Unable to read media metadata"));
                 }
 
                 const hasValidStream = metadata.streams?.find(stream => stream.codec_type == "video");
 
                 if (!hasValidStream) {
-                    fileCleaner(filePath);
                     return reject(new BadRequestException("Unable to validate file properities"))
                 }
 
-                const maxDuration = 600;
+                const maxDuration = 180;
                 const duration = metadata.format?.duration;
 
                 if (!duration || duration > maxDuration) {
-                    fileCleaner(filePath);
-                    return reject(new BadRequestException("File exceeds max time limit of 10 minutes"));
+                    return reject(new BadRequestException("File exceeds max time limit of 3 minutes"));
                 }
 
                 return resolve(true)
@@ -47,8 +43,6 @@ export class TranscodeService {
                 .format("wav")
                 .on('end', () => resolve(outputPath))
                 .on("error", err => {
-                    fileCleaner(filePath);
-                    console.log(err)
                     reject(new Error("Something went wrong while processing file"))
                 })
                 .save(outputPath);
@@ -77,8 +71,6 @@ export class TranscodeService {
                 .format("mp4")
                 .on("end", () => resolve(outputPath))
                 .on("error", err => {
-                    fileCleaner(filePath);
-                    console.error(err);
                     reject(new Error("Something went wrong while processing file"));
                 })
                 .save(outputPath);

@@ -18,22 +18,17 @@ const multer_options_1 = require("../utils/multer-options");
 const platform_express_1 = require("@nestjs/platform-express");
 const video_service_1 = require("../service/video.service");
 const whisper_options_dto_1 = require("../dto/whisper-options.dto");
-const file_cleaner_1 = require("../utils/file-cleaner");
 const fs_1 = require("fs");
 const swagger_1 = require("@nestjs/swagger");
+const clean_up_interceptor_1 = require("../interceptor/clean-up.interceptor");
 let VideoController = class VideoController {
     videoService;
     constructor(videoService) {
         this.videoService = videoService;
     }
     async create(file, dto) {
-        if (!file)
-            throw new common_1.BadRequestException('File is missing');
         const videoPath = await this.videoService.create(file.path, dto);
         const stream = (0, fs_1.createReadStream)(videoPath);
-        stream.on('close', () => {
-            (0, file_cleaner_1.fileCleaner)(videoPath);
-        });
         return new common_1.StreamableFile(stream, {
             type: 'video/mp4',
             disposition: `attachment; filename="${file.originalname}"`,
@@ -43,7 +38,7 @@ let VideoController = class VideoController {
 exports.VideoController = VideoController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('video', multer_options_1.multerOptions)),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('video', multer_options_1.multerOptions), clean_up_interceptor_1.CleanUpInterceptor),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({
         summary: 'Create a subtitled video',

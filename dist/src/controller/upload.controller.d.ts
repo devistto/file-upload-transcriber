@@ -1,8 +1,0 @@
-import { StreamableFile } from "@nestjs/common";
-import { UploadService } from "src/service/upload.service";
-import { WhisperOptionsDto } from "src/dto/whisper-options.dto";
-export declare class UploadController {
-    private videoController;
-    constructor(videoController: UploadService);
-    create(file: Express.Multer.File, dto: WhisperOptionsDto): Promise<StreamableFile>;
-}

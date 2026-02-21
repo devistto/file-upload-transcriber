@@ -8,7 +8,7 @@ import { MulterOptions } from "@nestjs/platform-express/multer/interfaces/multer
 export const multerOptions: MulterOptions = {
     storage: diskStorage({
         destination(req, file, callback) {
-            const base = path.join(process.cwd(), "uploads");
+            const base = path.join(process.cwd(), "temp");
             const fileFolder = customAlphabet("abcdefghijklmnopqrstuvwxyz123456789", 10);
             const filePath = path.join(base, fileFolder());
 
@@ -20,7 +20,7 @@ export const multerOptions: MulterOptions = {
         },
     }),
     limits: {
-        fileSize: 500 * 1024 * 1024
+        fileSize: 250 * 1024 * 1024
     },
 
     fileFilter(req, file, callback) {
